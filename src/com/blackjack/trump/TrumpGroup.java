@@ -21,4 +21,8 @@ public class TrumpGroup {
     public int getSize() {
         return trumps.size();
     }
+
+    public void clear() { 
+        trumps.clear();
+    }
 }
