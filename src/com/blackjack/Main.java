@@ -2,6 +2,7 @@ package com.blackjack;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class Main {
     public static void main(String[] args) {
@@ -35,10 +36,16 @@ class Frame extends JFrame {
         getContentPane().add(startPage, "startPage");
         getContentPane().add(gamePage, "gamePage");
 
+        startPage.addStartButtonCallback(_ -> startGame());
+
         showPage("startPage");
     }
 
     public void showPage(String page) {
         cardLayout.show(getContentPane(), page);
+    }
+
+    public void startGame() {
+        showPage("gamePage");
     }
 }
