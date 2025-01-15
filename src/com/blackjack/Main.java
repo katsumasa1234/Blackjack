@@ -36,6 +36,7 @@ class Frame extends JFrame {
         getContentPane().add(gamePage, "gamePage");
 
         startPage.addStartButtonCallback(_ -> startGame());
+        gamePage.addFinishCallback(_ -> finishGame());
 
         showPage("startPage");
     }
@@ -45,6 +46,11 @@ class Frame extends JFrame {
     }
 
     public void startGame() {
+        gamePage.gameInitialize();
         showPage("gamePage");
+    }
+
+    public void finishGame() {
+        showPage("startPage");
     }
 }
