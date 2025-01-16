@@ -3,7 +3,6 @@ package com.blackjack.trump;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
@@ -64,5 +63,10 @@ public class Trump extends JPanel{
 
     public void flip(int face) {
         this.face = face;
+    }
+
+    public int getPoint() {
+        if (face == FRONT) return Math.min(num, 10);
+        else return 0;
     }
 }

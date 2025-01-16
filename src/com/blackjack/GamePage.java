@@ -3,8 +3,9 @@ package com.blackjack;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+
 import com.blackjack.trump.*;
 import com.blackjack.trump.Trump.Mark;
 
@@ -23,6 +24,14 @@ public class GamePage extends JPanel{
     JPanel playerSplitPanel1 = new JPanel();
     JPanel playerSplitPanel2 = new JPanel();
     JPanel playerInfoPanel = new JPanel();
+    JPanel playerDeckInfoPanel = new JPanel();
+    JPanel playerBetInfoPanel = new JPanel();
+    JPanel playerPointInfoPanel = new JPanel();
+
+    JLabel dealerDeckInfoLabel = new JLabel();
+    JLabel playerDeckInfoLabel = new JLabel();
+    JLabel playerBetInfoLabel = new JLabel("ベットするポイント");
+    JLabel playerPointInfoLabel = new JLabel();
 
     JButton dealButton = new JButton("ディール");
     JButton standButton = new JButton("スタンド");
@@ -40,6 +49,13 @@ public class GamePage extends JPanel{
     final TrumpGroup playerTrump = new TrumpGroup();
     final TrumpGroup playerSplitTrump = new TrumpGroup();
     final TrumpGroup trashTrump = new TrumpGroup();
+
+    TrumpGroup playerFocusTrump = playerTrump;
+
+    public long playerPoint = 10000;
+    public long playerBetPoint = 0;
+    public boolean isInsurance = false;
+    public boolean isDoubleDown = false;
 
     public GameManager gameManager = new GameManager();
 
@@ -74,11 +90,20 @@ public class GamePage extends JPanel{
         playerPanel.add(playerSplitPanel, "split");
         playerTrumpCardLayout.show(playerPanel, "single");
 
+        playerSplitPanel.setLayout(playerTrumpGridLayout);
         playerSplitPanel.add(playerSplitPanel1);
         playerSplitPanel.add(playerSplitPanel2);
-        playerSplitPanel.setLayout(playerTrumpGridLayout);
 
-        playerInfoPanel.add(dealField);
+        playerInfoPanel.setLayout(new GridLayout(3, 1));
+        playerInfoPanel.add(playerDeckInfoPanel);
+        playerInfoPanel.add(playerBetInfoPanel);
+        playerInfoPanel.add(playerPointInfoPanel);
+
+        dealerInfoPanel.add(dealerDeckInfoLabel);
+        playerDeckInfoPanel.add(playerDeckInfoLabel);
+        playerBetInfoPanel.add(playerBetInfoLabel);
+        playerBetInfoPanel.add(dealField);
+        playerPointInfoPanel.add(playerPointInfoLabel);
 
         dealerInfoPanel.setOpaque(false);
         dealerPanel.setOpaque(false);
@@ -91,6 +116,9 @@ public class GamePage extends JPanel{
         playerInfoPanel.setOpaque(false);
         continueButton.setOpaque(false);
         finishButton.setOpaque(false);
+        playerDeckInfoPanel.setOpaque(false);
+        playerBetInfoPanel.setOpaque(false);
+        playerPointInfoPanel.setOpaque(false);
 
         dealButton.setFocusPainted(false);
         standButton.setFocusPainted(false);
@@ -104,9 +132,20 @@ public class GamePage extends JPanel{
         dealField.setColumns(10);
         dealField.setHorizontalAlignment(JFormattedTextField.RIGHT);
         dealField.setText("0");
+
+        dealButton.addActionListener(_ -> deal());
+        standButton.addActionListener(_ -> stand());
+        hitButton.addActionListener(_ -> hit());
+        doubleDownButton.addActionListener(_ -> doubleDown());
+        insuranceButton.addActionListener(_ -> insurance());
+        splitButton.addActionListener(_ -> split());
+        continueButton.addActionListener(_ -> gameContinue());
     }
 
     public void gameInitialize() {
+        playerPoint = 10000;
+        playerBetPoint = 0;
+
         dealButton.setVisible(true);
         standButton.setVisible(false);
         hitButton.setVisible(false);
@@ -115,6 +154,11 @@ public class GamePage extends JPanel{
         insuranceButton.setVisible(false);
         continueButton.setVisible(false);
         finishButton.setVisible(false);
+
+        dealField.setEnabled(true);
+        dealField.setText("0");
+
+        playerDeckInfoLabel.setText("");
 
         changePlayerDeck("single");
 
@@ -127,17 +171,8 @@ public class GamePage extends JPanel{
         }
         deckTrump.shuffle();
 
-        for (int i = 0; i < 20; i++) {
-            Trump trump = deckTrump.draw();
-            trump.flip(Trump.FRONT);
-            playerTrump.add(trump);
-        }
-        for (int i = 0; i < 20; i++) {
-            Trump trump = deckTrump.draw();
-            trump.flip(Trump.FRONT);
-            dealerTrump.add(trump);
-        }
         trumpUpdate();
+        infoUpdate();
     }
 
     public void trumpUpdate() {
@@ -153,6 +188,18 @@ public class GamePage extends JPanel{
             for (Trump trump : playerTrump.trumps) playerSplitPanel1.add(trump);
             for (Trump trump : playerSplitTrump.trumps) playerSplitPanel2.add(trump);
         }
+
+        dealerPanel.setVisible(false);
+        dealerPanel.setVisible(true);
+    }
+
+    public void infoUpdate() {
+        if (playerTrumpPanel.isVisible()) playerDeckInfoLabel.setText("Score : " + playerTrump.getPoint() + (playerTrump.getPoint() > 21 ? " burst" : ""));
+        else playerDeckInfoLabel.setText("Score : " + playerTrump.getPoint() + (playerTrump.getPoint() > 21 ? " burst" : "") + " | Score : " + playerSplitTrump.getPoint() + (playerSplitTrump.getPoint() > 21 ? " burst" : ""));
+
+        dealerDeckInfoLabel.setText("Score : " + dealerTrump.getPoint() + (dealerTrump.getPoint() > 21 ? " burst" : ""));
+
+        playerPointInfoLabel.setText("所持ポイント : " + playerPoint);
     }
 
     public void changePlayerDeck(String deck) {
@@ -161,5 +208,311 @@ public class GamePage extends JPanel{
 
     public void addFinishCallback(ActionListener listener) {
         finishButton.addActionListener(listener);
+    }
+
+    private void showMessageDialog(String text) {
+        JOptionPane.showMessageDialog(getParent(), text);
+    }
+
+
+    public void setDefaultDeck() {
+        while (dealerTrump.getSize() != 0) trashTrump.add(dealerTrump.draw());
+        while (playerTrump.getSize() != 0) trashTrump.add(playerTrump.draw());
+        while (playerSplitTrump.getSize() != 0) trashTrump.add(playerSplitTrump.draw());
+
+        playerSplitPanel1.setBorder(null);
+        playerSplitPanel2.setBorder(null);
+
+        changePlayerDeck("single");
+        playerFocusTrump = playerTrump;
+        isInsurance = false;
+        isDoubleDown = false;
+
+        Trump trump = draw();
+        trump.flip(Trump.FRONT);
+        if (trump.num == 1) insuranceButton.setVisible(true);
+        dealerTrump.add(trump);
+        trump = draw();
+        trump.flip(Trump.BACK);
+        dealerTrump.add(trump);
+
+        trump = draw();
+        trump.flip(Trump.FRONT);
+        int num = trump.getPoint();
+        playerTrump.add(trump);
+        trump = draw();
+        trump.flip(Trump.FRONT);
+        if (num == trump.getPoint()) splitButton.setVisible(true);
+        playerTrump.add(trump);
+
+        dealButton.setVisible(false);
+        standButton.setVisible(true);
+        hitButton.setVisible(true);
+        doubleDownButton.setVisible(true);
+        dealField.setEnabled(false);
+
+        trumpUpdate();
+        infoUpdate();
+        
+        if (playerTrump.getPoint() == 21) {
+            blackjack();
+            return;
+        }
+    }
+
+    public void deal() {
+        try {
+            playerBetPoint = Long.parseLong(dealField.getText().replace(",", ""));
+        } catch (NumberFormatException e) {
+            showMessageDialog("ベットしたポイントが不正です。");
+            return;
+        }
+
+        if (playerBetPoint > playerPoint) {
+            showMessageDialog("所持ポイントが足りません。");
+            return;
+        }
+
+        if (playerBetPoint < 0) {
+            showMessageDialog("0未満のポイントをかけることはできません。");
+            return;
+        }
+
+        playerPoint -= playerBetPoint;
+
+        setDefaultDeck();
+    }
+
+    public Trump draw() {
+        try {
+            return deckTrump.draw();
+        } catch (IndexOutOfBoundsException e) {
+            while (trashTrump.getSize() != 0) deckTrump.add(trashTrump.draw());
+            deckTrump.shuffle();
+            return deckTrump.draw();
+        }
+    }
+
+    public void hit() {
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        Trump trump = draw();
+        trump.flip(Trump.FRONT);
+        playerFocusTrump.add(trump);
+
+        trumpUpdate();
+        infoUpdate();
+
+        if (playerFocusTrump.getPoint() >= 21) stand();
+    }
+
+    public void stand() {
+        if (playerSplitPanel.isVisible() && playerFocusTrump == playerTrump) {
+            playerFocusTrump = playerSplitTrump;
+            playerSplitPanel1.setBorder(null);
+            playerSplitPanel2.setBorder(new LineBorder(Color.black));
+            if (playerSplitTrump.getPoint() == 21) stand();
+            trumpUpdate();
+            infoUpdate();
+            return;
+        }
+        standButton.setVisible(false);
+        hitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        dealerTrump.trumps.get(1).flip(Trump.FRONT);
+        infoUpdate();
+        trumpUpdate();
+
+        if (playerSplitPanel.isVisible() && playerSplitTrump.getPoint() > 21) lose();
+        if (playerSplitPanel.isVisible() && playerTrump.getPoint() > 21) lose();
+        if (playerSplitPanel.isVisible() && playerSplitTrump.getPoint() > 21 && playerTrump.getPoint() > 21) return;
+        if (!playerSplitPanel.isVisible() && playerTrump.getPoint() > 21) {
+            lose();
+            return;
+        }
+
+        if (dealerTrump.getPoint() == 21) {
+            continueButton.setVisible(true);
+            finishButton.setVisible(true);
+            if (isInsurance) playerPoint += playerBetPoint / 2f * 3;
+            infoUpdate();
+            dealerDeckInfoLabel.setText("Score : 21 blackjack");
+            return;
+        }
+
+        while (dealerTrump.getPoint() < 17) {
+            Trump trump = draw();
+            trump.flip(Trump.FRONT);
+            dealerTrump.add(trump);
+        }
+
+        trumpUpdate();
+        infoUpdate();
+
+        if (playerTrump.getPoint() > 21) {}
+        else if (dealerTrump.getPoint() > 21 || playerTrump.getPoint() > dealerTrump.getPoint()) win();
+        else if (dealerTrump.getPoint() == playerTrump.getPoint()) push();
+        else lose();
+
+        if (playerSplitPanel.isVisible()) {
+            if (playerSplitTrump.getPoint() > 21) {}
+            else if (dealerTrump.getPoint() > 21 || playerSplitTrump.getPoint() > dealerTrump.getPoint()) win();
+            else if (dealerTrump.getPoint() == playerSplitTrump.getPoint()) push();
+            else lose();
+        }
+    }
+
+    public void doubleDown() {
+        if (playerPoint - playerBetPoint < 0) {
+            showMessageDialog("ポイントが足りません。");
+            return;
+        }
+
+        isDoubleDown = true;
+        playerPoint -= playerBetPoint;
+
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        Trump trump = draw();
+        trump.flip(Trump.FRONT);
+        playerFocusTrump.add(trump);
+
+        stand();
+    }
+
+    public void insurance() {
+        if (playerPoint - playerBetPoint / 2f < 0) {
+            showMessageDialog("ポイントが足りません。");
+            return;
+        }
+
+        isInsurance = true;
+        playerPoint -= playerBetPoint / 2f;
+
+        insuranceButton.setVisible(false);
+
+        infoUpdate();
+    }
+
+    public void split() {
+        if (playerPoint - playerBetPoint < 0) {
+            showMessageDialog("ポイントが足りません。");
+            return;
+        }
+
+        playerPoint -= playerBetPoint;
+        splitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+
+        changePlayerDeck("split");
+        playerSplitTrump.add(playerTrump.trumps.remove(1));
+
+        Trump trump = draw();
+        trump.flip(Trump.FRONT);
+        playerTrump.add(trump);
+
+        trump = draw();
+        trump.flip(Trump.FRONT);
+        playerSplitTrump.add(trump);
+
+        playerFocusTrump = playerTrump;
+        playerSplitPanel1.setBorder(new LineBorder(Color.black));
+        if (playerTrump.getPoint() == 21) {
+            stand();
+            if (playerSplitTrump.getPoint() == 21) stand();
+        }
+
+        trumpUpdate();
+        infoUpdate();
+    }
+
+    public void gameContinue() {
+        dealButton.setVisible(true);
+
+        continueButton.setVisible(false);
+        finishButton.setVisible(false);
+        
+        dealField.setEnabled(true);
+    }
+
+    public void win() {
+        playerPoint += playerBetPoint * 2;
+        if (isDoubleDown) playerPoint += playerBetPoint * 2;
+        
+        infoUpdate();
+        trumpUpdate();
+
+        standButton.setVisible(false);
+        hitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        continueButton.setVisible(true);
+        finishButton.setVisible(true);
+    }
+
+    public void lose() {
+        infoUpdate();
+        trumpUpdate();
+
+        standButton.setVisible(false);
+        hitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        continueButton.setVisible(true);
+        finishButton.setVisible(true);
+    }
+
+    public void push() {
+        playerPoint += playerBetPoint;
+        if (isDoubleDown) playerPoint += playerBetPoint;
+
+        infoUpdate();
+        trumpUpdate();
+
+        standButton.setVisible(false);
+        hitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+        insuranceButton.setVisible(false);
+        splitButton.setVisible(false);
+
+        continueButton.setVisible(true);
+        finishButton.setVisible(true);
+    }
+
+    public void blackjack() {
+        standButton.setVisible(false);
+        hitButton.setVisible(false);
+        doubleDownButton.setVisible(false);
+        splitButton.setVisible(false);
+        insuranceButton.setVisible(false);
+
+        continueButton.setVisible(true);
+        finishButton.setVisible(true);
+
+        dealerTrump.trumps.get(1).flip(Trump.FRONT);
+        trumpUpdate();
+
+        if (dealerTrump.getPoint() == 21) {
+            playerPoint += playerBetPoint;
+            infoUpdate();
+            dealerDeckInfoLabel.setText("Score : 21 blackjack");
+            
+        } else {
+            playerPoint += (int)(playerBetPoint * 2.5);
+            infoUpdate();
+        }
+
+        playerDeckInfoLabel.setText("Score : 21 blackjack");
     }
 }

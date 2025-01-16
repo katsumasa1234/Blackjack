@@ -1,5 +1,4 @@
 package com.blackjack.trump;
-
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -24,5 +23,19 @@ public class TrumpGroup {
 
     public void clear() { 
         trumps.clear();
+    }
+
+    public int getPoint() {
+        int sum = 0;
+        int aceCount = 0;
+        for (Trump trump : trumps) {
+            int point = trump.getPoint();
+            sum += point;
+            if (point == 1) aceCount++;
+        }
+        for (int i = 0; i < aceCount; i++) {
+            if (sum + 10 <= 21) sum += 10;
+        }
+        return sum;
     }
 }
