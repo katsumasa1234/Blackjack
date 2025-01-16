@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-
 import com.blackjack.trump.*;
 import com.blackjack.trump.Trump.Mark;
 
@@ -56,8 +55,6 @@ public class GamePage extends JPanel{
     public long playerBetPoint = 0;
     public boolean isInsurance = false;
     public boolean isDoubleDown = false;
-
-    public GameManager gameManager = new GameManager();
 
     public GamePage() {
         pageInitialize();
