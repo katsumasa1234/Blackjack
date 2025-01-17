@@ -9,7 +9,7 @@ import com.blackjack.trump.*;
 import com.blackjack.trump.Trump.Mark;
 
 public class GamePage extends JPanel{
-
+    //画面レイアウトのためのコンテンツの定義
     GridLayout gridLayout = new GridLayout(5, 1);
     GridLayout playerTrumpGridLayout = new GridLayout(1, 2);
     CardLayout playerTrumpCardLayout = new CardLayout();
@@ -43,14 +43,17 @@ public class GamePage extends JPanel{
 
     JFormattedTextField dealField = new JFormattedTextField(NumberFormat.getInstance());
 
-    final TrumpGroup deckTrump = new TrumpGroup();
-    final TrumpGroup dealerTrump = new TrumpGroup();
-    final TrumpGroup playerTrump = new TrumpGroup();
-    final TrumpGroup playerSplitTrump = new TrumpGroup();
-    final TrumpGroup trashTrump = new TrumpGroup();
+    //使用されるTrumpGroupの定義
+    final TrumpGroup deckTrump = new TrumpGroup(); //山札
+    final TrumpGroup dealerTrump = new TrumpGroup(); //ディーラーの手札
+    final TrumpGroup playerTrump = new TrumpGroup(); //プレイヤーの手札
+    final TrumpGroup playerSplitTrump = new TrumpGroup(); //スプリットがあった場合に使用される手札
+    final TrumpGroup trashTrump = new TrumpGroup(); //使用済みのトランプの保存用
 
+    //スプリットに対応するために、プレイヤーがフォーカスしている手札を保存する
     TrumpGroup playerFocusTrump = playerTrump;
 
+    //プレイヤーの情報を保存するための変数
     public long playerPoint = 10000;
     public long playerBetPoint = 0;
     public boolean isInsurance = false;
@@ -61,11 +64,13 @@ public class GamePage extends JPanel{
         contentInitialize();
     }
 
+    //gamePageの初期化関数
     private void pageInitialize() {
         setOpaque(false);
         setLayout(gridLayout);
     }
 
+    //使用されるコンテンツの初期化関数
     private void contentInitialize() {
         add(dealerInfoPanel);
         add(dealerPanel);
@@ -139,6 +144,7 @@ public class GamePage extends JPanel{
         continueButton.addActionListener(_ -> gameContinue());
     }
 
+    //ゲーム情報を初期化する関数
     public void gameInitialize() {
         playerPoint = 10000;
         playerBetPoint = 0;
