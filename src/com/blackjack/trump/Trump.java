@@ -51,13 +51,14 @@ public class Trump extends JPanel{
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        //パネルを真っ白にする
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, (int)cardSize.getWidth(), (int)cardSize.getHeight());
 
-        if (face == BACK) {
+        if (face == BACK) { //裏向きになっていれば、カードサイズより少し小さい赤色の四角を表示する
             g.setColor(Color.red);
             g.fillRect(4, 4, (int)(cardSize.getWidth() - 8), (int)(cardSize.getHeight() - 8));
-        } else {
+        } else { //表向きになっていれば、数字とマークを表示する
             g.setColor(color);
             g.setFont(new Font(Font.DIALOG, Font.PLAIN, 16));
             g.drawString(numbers[num], 3, 16);
@@ -74,6 +75,6 @@ public class Trump extends JPanel{
     //そのトランプのスコアを返す関数
     public int getPoint() {
         if (face == FRONT) return Math.min(num, 10);
-        else return 0;
+        else return 0; //裏返しになっているトランプのポイントは数えない
     }
 }
